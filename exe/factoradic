@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+
+require "factoradic"
+
+if ARGV.length > 0
+  strings = if ARGV.first == '-'
+              STDIN.readlines
+            else
+              ARGV
+            end
+
+  strings.each do |arg|
+    puts Factoradic.autoconvert(arg)
+  end
+
+else
+  puts <<USAGE_END
+Usage: $0 <string> [...]
+Converts the <string> to the opposite representation.
+
+If multiple strings are given, each converted value will be
+printed, one value per-line.
+
+If the first arg id the single character string '-', strings
+will be read from STDIN instead, one value per-line.
+
+If <string> contains ',' or ':' separators, it will be parsed
+as a factoradic (factorial base) number and the decimal
+representation will be printed. Otherwise, <string> will be
+parsed as a decimal (base-10) number and the factoradic
+representation of the number will be printed.
+
+EXAMPLES
+
+$ factoradic 5:4:3:2:1:0
+719
+
+$ factoradic 1:0:0:0:0:0:0
+720
+
+$ factoradic 463
+3:4:1:0:1:0
+USAGE_END
+end
