@@ -19,12 +19,23 @@ class Factoradic
       f.parse_factoradic(str)
       f.to_i.to_s(10)
     end
+    alias f2d convert_factoradic_to_decimal
 
-    def convert_decimal_to_factoradic(str)
+    def convert_decimal_to_factoradic(decimal)
+      intvalue = case decimal
+                 when Integer
+                   decimal
+                 when String
+                   decimal.to_i(10)
+                 else
+                   raise ArgumentError, "Expected an Integer or String{"
+                 end
+
       f = new
-      f.value = str.to_i(10)
+      f.value = intvalue
       f.to_s
     end
+    alias d2f convert_decimal_to_factoradic
 
     def valid_factoradic_digits?(digit_list)
       digit_list.reverse.map.with_index do |digit, idx|
