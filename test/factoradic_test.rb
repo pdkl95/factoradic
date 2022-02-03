@@ -1,6 +1,10 @@
 require "test_helper"
 
 class FactoradicTest < Minitest::Test
+  def setup
+    Factoradic.options.separator = ':'
+  end
+
   def test_that_it_has_a_version_number
     refute_nil ::Factoradic::VERSION
   end

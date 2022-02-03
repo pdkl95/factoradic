@@ -1,7 +1,25 @@
 require_relative 'factoradic/version'
 
+require 'ostruct'
+
 class Factoradic
-  module ClassMethods
+  DEFAULT_OPTIONS = {
+    # disabling this will save ram when computing
+    # very large (Bignum) factorial values
+    memoize_factorial_values: true,
+
+    # the separator used between placex in factorial base
+    separator: ':'
+  }
+
+  @options = OpenStruct.new(DEFAULT_OPTIONS)
+
+  # cache of basic factorial vslues
+  @factorial_sequence = [1]
+
+  class << self
+    attr_accessor :options
+
     def string_is_factoradic?(str)
       !!(str =~ /\A\d+([,:]\d+)+\Z/)
     end
@@ -43,10 +61,6 @@ class Factoradic
       end.all?(true)
     end
 
-    def init_factorial_sequence!
-      @factorial_sequence = [1]
-    end
-
     def memoized_factorial(n)
       if @factorial_sequence.length > n
         @factorial_sequence[n]
@@ -54,13 +68,27 @@ class Factoradic
         @factorial_sequence[n] = n * memoized_factorial(n - 1)
       end
     end
+
+    def basic_factorial(n)
+      (1..n).reduce(1, :*)
+    end
+
+    def factorial(n)
+      if options.memoize_factorial_values
+        memoized_factorial(n)
+      else
+        basic_factorial(n)
+      end
+    end
   end
-  extend ClassMethods
-  self.init_factorial_sequence!
 
   def initialize
     @value = 0
     @digits = [0]
+  end
+
+  def options
+    self.class.options
   end
 
   def recompute_digits!
@@ -79,7 +107,7 @@ class Factoradic
 
   def recompute_value!
     @value = @digits.reverse.map.with_index do |digit, idx|
-      digit * Factoradic.memoized_factorial(idx)
+      digit * Factoradic.factorial(idx)
     end.reduce(&:+)
   end
 
@@ -119,7 +147,7 @@ class Factoradic
     recompute_digits!
   end
 
-  def to_s(separator = ':')
+  def to_s(separator = options.separator)
     @digits.join(separator)
   end
 

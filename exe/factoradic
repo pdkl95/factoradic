@@ -1,6 +1,80 @@
 #!/usr/bin/env ruby
 
-require "factoradic"
+require 'factoradic'
+require 'optparse'
+
+Options = Struct.new(:input, :output)
+options = Options.new(nil, nil)
+
+optparse = OptionParser.new do |opts|
+  opts.banner = "Converts between factorial base and decimal"
+  opts.define_head "Usage: #{$0} [options] <number> [...]"
+  opts.summary_width = 24
+  opts.summary_indent = '  '
+
+  opts.separator ''
+  opts.separator 'INPUT/OUTPUT FORMAT OPTIONS'
+
+  VALID_BASES = ['d', 'f', 'decimal', 'factorial']
+  VALID_BASES_HELP = "(valid bases: #{VALID_BASES.join(', ')})"
+
+  def get_base_opt(str)
+    case str
+    when 'd', 'decimal'
+      :decimal
+    when 'f', 'factorial'
+      :factorial
+    else
+      raise ArgumentError, "invalid BASE: #{str.inspect} - rxpected: #{VALID_BASES.join(', ')}"
+    end
+  end
+
+  opts.on('-iBASE', '--input=BASE',
+          'Interpret input strings in <BASE> format',
+          VALID_BASES_HELP) do |base|
+    options.input = get_base_opt(base)
+  end
+
+  opts.on('-oBASE', '--output=BASE',
+          'Print converted numbers in <BASE> format',
+          VALID_BASES_HELP) do |base|
+    options.output = get_base_opt(base)
+  end
+
+  opts.separator ''
+
+  opts.on('--d2f', 'Shorthand for --input=decimal --output=factorial') do
+    options.input  = :decimal
+    options.output = :factorial
+  end
+
+  opts.on('--f2d', 'Shorthand for --input=factorial --output=decimal') do
+    options.input  = :factorial
+    options.output = :decimal
+  end
+
+  opts.separator ''
+  opts.on('-s', '--separator=CHAR',
+          'Use <CHAR> as the factorial base position separator',
+          "(default: \"#{Factoradic.options.separator}\")") do |sep|
+    Factoradic.options.separator = sep
+  end
+
+  opts.separator ''
+  opts.separator 'OTHER OPTIONS'
+
+  opts.on('-h', '--help', 'Show this help message') do
+    puts opts
+    exit
+  end
+
+  opts.on('--version', 'Show version') do
+    puts Factoradic::VERSION
+    exit
+  end
+end
+
+optparse.parse!
 
 if ARGV.length > 0
   strings = if ARGV.first == '-'
