@@ -10,13 +10,17 @@ class FactoradicOptionsTest < Minitest::Test
   end
 
   def test_modified_output_separator
+    Factoradic.options.memoize_factorial_values = false
     Factoradic.options.separator = ','
+
     assert_equal Factoradic.d2f('463'),   '3,4,1,0,1,0'
     assert_equal Factoradic.d2f('719'),   '5,4,3,2,1,0'
     assert_equal Factoradic.d2f('720'), '1,0,0,0,0,0,0'    
   end
 
   def common_factorial_tests
+    Factoradic.options.separator = ':'
+
     assert_equal Factoradic.f2d(  '0'), '0'
     assert_equal Factoradic.f2d('1:0'), '1'
 

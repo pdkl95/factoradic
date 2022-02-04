@@ -6,7 +6,7 @@ class Factoradic
   DEFAULT_OPTIONS = {
     # disabling this will save ram when computing
     # very large (Bignum) factorial values
-    memoize_factorial_values: true,
+    memoize_factorial_values: false,
 
     # the separator used between placex in factorial base
     separator: ':'
@@ -30,7 +30,6 @@ class Factoradic
            else
              /\A\d+([,:]\d+)+\Z/
            end
-      puts re.inspect
       !!(str =~ re)
     end
 
@@ -156,8 +155,6 @@ class Factoradic
             /[,:]/
           end
 
-    puts "sep = " + sep.inspect
-    puts str.split(sep).inspect
     self.digits = str.split(sep).map{ |x| x.to_i }
   end
 
@@ -171,7 +168,7 @@ class Factoradic
     end
 
     unless Factoradic.valid_factoradic_digits?(new_digits)
-      raise ArgumentError, "Invalid factoradic digits."
+      raise ArgumentError, "Invalid factoradic digits: #{new_digits.inspect}"
     end
 
     @digits = new_digits

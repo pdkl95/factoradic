@@ -157,7 +157,6 @@ else
   exit 1
 end
 
-require 'pp'
 options.instream.each do |arg|
   n, t = case options.input
          when :decimal
