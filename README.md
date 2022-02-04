@@ -1,8 +1,8 @@
 # Factoradic
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/factoradic`. To experiment with that code, run `bin/console` for an interactive prompt.
+Factorial base integer conversion.
 
-TODO: Delete this and the text above, and describe your gem
+[https://en.wikipedia.org/wiki/Factorial_number_system](https://en.wikipedia.org/wiki/Factorial_number_system)
 
 ## Installation
 
@@ -22,7 +22,50 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+### The command line utility
+
+#### Options
+
+    Usage: exe/factoradic [options] <number> [...]
+
+    OPTIONS
+      -i, --input=BASE         Interpret input strings in <BASE> format
+                               (valid bases: d, f, decimal, factorial)
+      -o, --output=BASE        Print converted numbers in <BASE> format
+                               (valid bases: d, f, decimal, factorial)
+
+          --d2f                Shorthand for --input=decimal --output=factorial
+          --f2d                Shorthand for --input=factorial --output=decimal
+
+      -s, --separator=CHAR     Use <CHAR> as the factorial base position separator
+                               (default: ":")
+          --[no-]cache         Enable/disable caching calculated factorial values.
+                               (default: On)
+
+      -h, --help               Show this help message
+          --version            Show version
+
+#### Examples
+
+    $ factoradic 5:4:3:2:1:0
+    719
+
+    $ factoradic 1:0:0:0:0:0:0
+    720
+
+    $ factoradic 463
+    3:4:1:0:1:0
+
+    $ factoradic --separator=',' 463
+    3,4,1,0,1,0
+
+    $ echo 1:3:0:0:0 | factoradic --f2d -
+    42
+
+    $ ( echo 719 ; echo 720 ) | factoradic --d2f -
+    5:4:3:2:1:0
+    1:0:0:0:0:0:0
+
 
 ## Development
 
