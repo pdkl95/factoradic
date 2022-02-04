@@ -20,8 +20,47 @@ class Factoradic
   class << self
     attr_accessor :options
 
+    def nonstandard_separator?
+      options.separator != DEFAULT_OPTIONS[:separator]
+    end
+
     def string_is_factoradic?(str)
-      !!(str =~ /\A\d+([,:]\d+)+\Z/)
+      re = if nonstandard_separator?
+             /\A\d+([#{options.separator}]\d+)+\Z/
+           else
+             /\A\d+([,:]\d+)+\Z/
+           end
+      puts re.inspect
+      !!(str =~ re)
+    end
+
+    def parse_factoradic(str)
+      new.tap do |f|
+        f.parse_factoradic(str)
+      end
+    end
+
+    def parse_decimal(decimal)
+      intvalue = case decimal
+                 when Integer
+                   decimal
+                 when String
+                   decimal.to_i(10)
+                 else
+                   raise ArgumentError, "Expected an Integer or String{"
+                 end
+
+      new.tap do |f|
+        f.value = intvalue
+      end
+    end
+
+    def parse(str)
+      if string_is_factoradic?(str)
+        [parse_factoradic(str), :factorial]
+      else
+        [parse_decimal(str), :decimal]
+      end
     end
 
     def autoconvert(str)
@@ -33,24 +72,13 @@ class Factoradic
     end
 
     def convert_factoradic_to_decimal(str)
-      f = new
-      f.parse_factoradic(str)
+      f = parse_factoradic(str)
       f.to_i.to_s(10)
     end
     alias f2d convert_factoradic_to_decimal
 
     def convert_decimal_to_factoradic(decimal)
-      intvalue = case decimal
-                 when Integer
-                   decimal
-                 when String
-                   decimal.to_i(10)
-                 else
-                   raise ArgumentError, "Expected an Integer or String{"
-                 end
-
-      f = new
-      f.value = intvalue
+      f = parse_decimal(decimal)
       f.to_s
     end
     alias d2f convert_decimal_to_factoradic
@@ -122,7 +150,15 @@ class Factoradic
   end
 
   def parse_factoradic(str)
-    self.digits = str.split(/[,:]/).map{ |x| x.to_i }
+    sep = if Factoradic.nonstandard_separator?
+            /[#{Factoradic.options.separator}]/
+          else
+            /[,:]/
+          end
+
+    puts "sep = " + sep.inspect
+    puts str.split(sep).inspect
+    self.digits = str.split(sep).map{ |x| x.to_i }
   end
 
   def digits=(new_digits)

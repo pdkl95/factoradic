@@ -3,8 +3,10 @@
 require 'factoradic'
 require 'optparse'
 
-Options = Struct.new(:input, :output)
-options = Options.new(nil, nil)
+Options = Struct.new(:instream, :outstream, :input, :output)
+options = Options.new
+options.instream  = STDIN
+options.outstream = STDOUT
 
 optparse = OptionParser.new do |opts|
   opts.banner = "Converts between factorial base and decimal"
@@ -13,7 +15,7 @@ optparse = OptionParser.new do |opts|
   opts.summary_indent = '  '
 
   opts.separator ''
-  opts.separator 'INPUT/OUTPUT FORMAT OPTIONS'
+  opts.separator 'OPTIONS'
 
   VALID_BASES = ['d', 'f', 'decimal', 'factorial']
   VALID_BASES_HELP = "(valid bases: #{VALID_BASES.join(', ')})"
@@ -60,11 +62,81 @@ optparse = OptionParser.new do |opts|
     Factoradic.options.separator = sep
   end
 
+  cache_default = if Factoradic.options.memoize_factorial_values
+                    'On'
+                  else
+                    'Off'
+                  end
+  opts.on('--[no-]cache',
+          'Enable/disable caching calculated factorial values.',
+          "(default: #{cache_default})") do |cache|
+    Factoradic.options.memoize_factorial_values = cache
+  end
+
   opts.separator ''
-  opts.separator 'OTHER OPTIONS'
 
   opts.on('-h', '--help', 'Show this help message') do
     puts opts
+    puts <<USAGE_END
+
+BEHAVIOR
+
+If multiple strings are given, each converted value will be
+printed, one value per-line.
+
+If the first arg is the single character string '-', strings
+will be read from STDIN instead, one value per-line.
+
+AUTOMAGIC BASE DETECTION
+
+By default, if an input string contains ',' or ':' separators,
+(or the character provided as a --separator) it will be parsed
+as a factoradic (factorial base) number and the decimal
+representation will be printed.
+
+Otherwise, the input string will be parsed as a decimal (base-10)
+number and the factoradic (factorial base) representation of
+the number will be printed.
+
+Automagic base detection is disabled with the explicit input
+and output bases are provided with the --input and --output
+options (or --d2f/--f2d).
+
+CACHING CALCULATED FACTORIAL VALUES
+
+The --cache option will enable a RAM cache to memoize
+calculated factorial values. This may be faster when
+converting many numbers at a time, at the cost of
+potentially much higher RAM usage.
+
+Caching calculated values is only useful if the
+same factorial value needs to be calculated
+multiple times. Enabling the cache while providing
+only a single number to convert is just wastes RAM.
+
+EXAMPLES
+
+$ factoradic 5:4:3:2:1:0
+719
+
+$ factoradic 1:0:0:0:0:0:0
+720
+
+$ factoradic 463
+3:4:1:0:1:0
+
+$ factoradic --separator=',' 463
+3,4,1,0,1,0
+
+$ echo 1:3:0:0:0 | factoradic --f2d -
+42
+
+$ ( echo 719 ; echo 720 ) | factoradic --d2f -
+5:4:3:2:1:0
+1:0:0:0:0:0:0
+
+USAGE_END
+
     exit
   end
 
@@ -77,42 +149,40 @@ end
 optparse.parse!
 
 if ARGV.length > 0
-  strings = if ARGV.first == '-'
-              STDIN.readlines
+  unless ARGV.first == '-'
+    options.instream = ARGV
+  end
+else
+  puts optparse
+  exit 1
+end
+
+require 'pp'
+options.instream.each do |arg|
+  n, t = case options.input
+         when :decimal
+           [Factoradic.parse_decimal(arg), :decimal]
+         when :factorial
+           [Factoradic.parse_factoradic(arg), :factorial]
+         else
+           Factoradic.parse(arg)
+         end
+
+  outmode = if options.output.nil?
+              case t
+              when :factorial then :decimal
+              when :decimal   then :factorial
+              else
+                :decimal
+              end
             else
-              ARGV
+              options.output
             end
 
-  strings.each do |arg|
-    puts Factoradic.autoconvert(arg)
-  end
-
-else
-  puts <<USAGE_END
-Usage: $0 <string> [...]
-Converts the <string> to the opposite representation.
-
-If multiple strings are given, each converted value will be
-printed, one value per-line.
-
-If the first arg id the single character string '-', strings
-will be read from STDIN instead, one value per-line.
-
-If <string> contains ',' or ':' separators, it will be parsed
-as a factoradic (factorial base) number and the decimal
-representation will be printed. Otherwise, <string> will be
-parsed as a decimal (base-10) number and the factoradic
-representation of the number will be printed.
-
-EXAMPLES
-
-$ factoradic 5:4:3:2:1:0
-719
-
-$ factoradic 1:0:0:0:0:0:0
-720
-
-$ factoradic 463
-3:4:1:0:1:0
-USAGE_END
+  options.outstream.puts case outmode
+                         when :decimal
+                           n.to_i.to_s
+                         when :factorial
+                           n.to_s
+                         end
 end
